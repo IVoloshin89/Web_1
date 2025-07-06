@@ -7,26 +7,31 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class Server {
+    private final Map<String, Map<String, Handler>> handlers = new ConcurrentHashMap<>();
     private int port;
 
-    private List<String> validPaths;
 
-    public Server(int serverPort, List<String> validPaths) {
+    public Server(int serverPort) {
         this.port = serverPort;
-        this.validPaths = validPaths;
     }
+
+
+
     public void start() {
 
         ExecutorService threadPool64 = Executors.newFixedThreadPool(64);
 
-//        final var validPaths = List.of("/index.html", "/spring.svg", "/spring.png",
-//                "/resources.html", "/styles.css", "/app.js", "/links.html", "/forms.html",
-//                "/classic.html", "/events.html", "/events.js");
+
+        final var validPaths = List.of("/index.html", "/spring.svg", "/spring.png",
+                "/resources.html", "/styles.css", "/app.js", "/links.html", "/forms.html",
+                "/classic.html", "/events.html", "/events.js");
 
         // Старт сервера
         try (var serverSocket = new ServerSocket(port)) {
@@ -105,8 +110,13 @@ public class Server {
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
-        }finally {
+        } finally {
             threadPool64.shutdown();
         }
     }
+public void addHandler(String method, String path, Handler handler) {
+    handlers.computeIfAbsent(method.toUpperCase(), k -> new ConcurrentHashMap<>())
+            .put(path, handler);
+}
+
 }
